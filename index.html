@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login / Registro con Términos - Inkaflix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: url('https://raw.githubusercontent.com/inkaflix/API/main/logo-inka-sann.png') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+    }
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.4));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      z-index: 1;
+    }
+    .container {
+      background: rgba(0,0,0,0.75);
+      padding: 30px 40px;
+      border-radius: 8px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .tab {
+      cursor: pointer;
+      flex: 1;
+      padding: 10px 0;
+      border-bottom: 3px solid transparent;
+      font-weight: bold;
+      transition: border-color 0.3s;
+      user-select: none;
+    }
+    .tab.active {
+      border-color: #e50914;
+      color: #e50914;
+    }
+    form {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    form.active {
+      display: flex;
+    }
+    input[type="email"],
+    input[type="password"] {
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+      width: 100%;
+    }
+    input::placeholder { color: #999; }
+    label.terms-label {
+      font-size: 13px;
+      margin-bottom: 15px;
+      color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    label.terms-label a {
+      color: #e50914;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+    button {
+      background-color: #e50914;
+      border: none;
+      padding: 14px;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      width: 100%;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #b0070f;
+    }
+    .message {
+      margin-top: 10px;
+      font-size: 14px;
+      min-height: 20px;
+      color: #f44336;
+    }
+    #toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #e50914;
+      color: white;
+      text-align: center;
+      border-radius: 4px;
+      padding: 12px 20px;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      font-weight: bold;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      opacity: 0;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #toast.show {
+      visibility: visible;
+      opacity: 1;
+    }
+    #modalTOS {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.9);
+      z-index: 2000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    #modalTOS .contenido {
+      background: #111;
+      color: white;
+      padding: 20px;
+      max-width: 500px;
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      overflow: auto;
+      max-height: 90vh;
+    }
+    #modalTOS h2 {
+      color: #e50914;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    #modalTOS .texto {
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    #modalTOS button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #modalTOS .aceptar {
+      background: #e50914;
+      color: white;
+    }
+    #modalTOS .rechazar {
+      background: #555;
+      color: white;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Modal de Términos -->
+  <div id="modalTOS">
+    <div class="contenido">
+      <h2>Términos y Condiciones</h2>
+      <div class="texto">
+        Al usar esta aplicación, aceptas que recopilemos información necesaria para autenticar tu sesión y brindar acceso al contenido exclusivo de Inkaflix. No compartimos datos con terceros. Tu privacidad y seguridad son nuestra prioridad.<br><br>
+        Para más información revisa nuestros <a href="https://www.inkaflix.lat/terminos" target="_blank" style="color:#e50914;">Términos completos</a>.
+      </div>
+      <div style="text-align:center;">
+        <button class="aceptar" onclick="aceptarTOS()">Aceptar</button>
+        <button class="rechazar" onclick="rechazarTOS()">Rechazar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login / Registro -->
+  <div class="overlay">
+    <div class="container">
+      <div class="tabs">
+        <div class="tab active" id="tabLogin">Login</div>
+        <div class="tab" id="tabRegister">Registro</div>
+      </div>
+
+      <!-- Login -->
+      <form id="formLogin" class="active" novalidate>
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" required />
+        <input type="password" id="loginPassword" placeholder="Contraseña" required />
+        <label class="terms-label">
+          <input type="checkbox" id="loginAcceptTerms" />
+          Acepto los <a href="#" onclick="abrirTOS(event)">términos</a>
+        </label>
+        <button type="submit" id="btnLogin" disabled>Acceder</button>
+        <div class="message" id="loginMessage"></div>
+      </form>
+
+      <!-- Registro -->
+      <form id="formRegister" novalidate>
+        <input type="email" id="registerEmail" placeholder="Correo electrónico" required />
+        <input type="password" id="registerPassword" placeholder="Contraseña (6+ caracteres)" required minlength="6" />
+        <label class="terms-label">
+          <input type="checkbox" id="registerAcceptTerms" />
+          Acepto los <a href="#" onclick="abrirTOS(event)">términos</a>
+        </label>
+        <button type="submit" id="btnRegister" disabled>Registrar</button>
+        <div class="message" id="registerMessage"></div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC-lcYWbB0YIE3ZW6_pKE9x2q-su81Ha9k",
+      authDomain: "inkaflix-4b903.firebaseapp.com",
+      projectId: "inkaflix-4b903",
+      storageBucket: "inkaflix-4b903.firebasestorage.app",
+      messagingSenderId: "879438103977",
+      appId: "1:879438103977:web:a6722e4f22ec647026b0b8",
+      measurementId: "G-M4KR2GM48E"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const redirectURL = "https://inkaflixlat.blogspot.com/"; // Cambia aquí a tu página
+
+    // Redirigir automáticamente si ya hay sesión activa
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        window.location.href = redirectURL;
+      }
+    });
+
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const formLogin = document.getElementById("formLogin");
+    const formRegister = document.getElementById("formRegister");
+
+    const loginMessage = document.getElementById("loginMessage");
+    const registerMessage = document.getElementById("registerMessage");
+    const toast = document.getElementById("toast");
+
+    const loginAcceptTerms = document.getElementById("loginAcceptTerms");
+    const registerAcceptTerms = document.getElementById("registerAcceptTerms");
+
+    const btnLogin = document.getElementById("btnLogin");
+    const btnRegister = document.getElementById("btnRegister");
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("show");
+      setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3000);
+    }
+
+    tabLogin.addEventListener("click", () => {
+      tabLogin.classList.add("active");
+      tabRegister.classList.remove("active");
+      formLogin.classList.add("active");
+      formRegister.classList.remove("active");
+      clearMessages();
+    });
+
+    tabRegister.addEventListener("click", () => {
+      tabRegister.classList.add("active");
+      tabLogin.classList.remove("active");
+      formRegister.classList.add("active");
+      formLogin.classList.remove("active");
+      clearMessages();
+    });
+
+    function clearMessages() {
+      loginMessage.textContent = "";
+      registerMessage.textContent = "";
+    }
+
+    loginAcceptTerms.addEventListener("change", () => {
+      btnLogin.disabled = !loginAcceptTerms.checked;
+    });
+
+    registerAcceptTerms.addEventListener("change", () => {
+      btnRegister.disabled = !registerAcceptTerms.checked;
+    });
+
+    formLogin.addEventListener("submit", (e) => {
+      e.preventDefault();
+      clearMessages();
+      if (!loginAcceptTerms.checked) {
+        showToast("Debes aceptar los términos para continuar.");
+        return;
+      }
+
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+
+      if (!email || !password) {
+        loginMessage.textContent = "Por favor completa todos los campos.";
+        return;
+      }
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+          showToast("Acceso exitoso. Redirigiendo...");
+          setTimeout(() => {
+            window.location.href = redirectURL;
+          }, 1500);
+        })
+        .catch(error => {
+          loginMessage.textContent = error.message;
+        });
+    });
+
+    formRegister.addEventListener("submit", (e) => {
+      e.preventDefault();
+      clearMessages();
+      if (!registerAcceptTerms.checked) {
+        showToast("Debes aceptar los términos para continuar.");
+        return;
+      }
+
+      const email = document.getElementById("registerEmail").value.trim();
+      const password = document.getElementById("registerPassword").value;
+
+      if (!email || !password) {
+        registerMessage.textContent = "Por favor completa todos los campos.";
+        return;
+      }
+
+      if (password.length < 6) {
+        registerMessage.textContent = "La contraseña debe tener al menos 6 caracteres.";
+        return;
+      }
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+          showToast("Registro exitoso. Redirigiendo...");
+          setTimeout(() => {
+            window.location.href = redirectURL;
+          }, 1500);
+        })
+        .catch(error => {
+          registerMessage.textContent = error.message;
+        });
+    });
+
+    function abrirTOS(e) {
+      e.preventDefault();
+      document.getElementById("modalTOS").style.display = "flex";
+    }
+
+    function aceptarTOS() {
+      document.getElementById("modalTOS").style.display = "none";
+    }
+
+    function rechazarTOS() {
+      document.getElementById("modalTOS").style.display = "none";
+      document.querySelector(".overlay").style.display = "none";
+      showToast("Has rechazado los términos. Acceso denegado.");
+    }
+  </script>
+</body>
+</html>
